@@ -6,200 +6,210 @@
   <title>QR Hunt Rajkot</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; overflow: hidden; }
+    html, body { height: 100vh; overflow: hidden; }
     body { 
-      font-family: 'Inter', Arial, sans-serif;
-      background: radial-gradient(circle at top right, #1e293b, #0f172a);
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       color: white;
+      font-family: system-ui, -apple-system, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
       overscroll-behavior: none;
     }
-    .box {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      padding: 40px;
-      border-radius: 20px;
+    
+    .screen {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 90vw; max-width: 380px;
       text-align: center;
-      width: 90%; max-width: 350px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
     }
-    h1 { 
-      font-size: 28px; 
-      background: linear-gradient(to right, #60a5fa, #a855f7);
+    
+    h1 {
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
+      background: linear-gradient(45deg, #fff, #e0e7ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 15px;
+      margin-bottom: 1.5rem;
     }
-    .jumble { 
-      font-size: 36px; 
-      letter-spacing: 8px; 
-      margin: 25px 0; 
-      padding: 20px; 
-      background: rgba(255,255,255,0.15);
-      border-radius: 15px;
+    
+    .jumble {
+      font-size: clamp(2.5rem, 10vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      margin: 2rem 0;
+      padding: 1.8rem;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
       cursor: pointer;
       user-select: none;
       transition: all 0.3s;
     }
-    .jumble:hover { transform: scale(1.02); }
-    h2 { font-weight: 300; font-size: 16px; color: #94a3b8; margin-bottom: 25px; }
-    input { 
-      width: 100%; padding: 18px; margin-top: 15px; border-radius: 12px; 
-      border: 1px solid rgba(255,255,255,0.1); 
-      background: rgba(15,23,42,0.8); color: white; font-size: 18px;
-      text-align: center;
+    .jumble:hover { transform: scale(1.03); }
+    
+    input {
+      width: 100%; padding: 1.3rem; margin: 1.5rem 0;
+      font-size: 1.3rem; border: none; border-radius: 16px;
+      background: rgba(255,255,255,0.25); color: white;
+      text-align: center; backdrop-filter: blur(10px);
     }
-    input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.5); }
-    button { 
-      margin-top: 25px; padding: 18px; width: 100%; border: none; border-radius: 12px; 
-      background: #10b981; color: white; font-weight: bold; font-size: 16px; cursor: pointer; 
-      transition: all 0.3s;
+    input::placeholder { color: rgba(255,255,255,0.7); }
+    input:focus { outline: none; box-shadow: 0 0 0 4px rgba(100,200,255,0.4); }
+    
+    button {
+      width: 100%; padding: 1.3rem; font-size: 1.2rem; font-weight: 700;
+      border: none; border-radius: 16px; background: #10b981; color: white;
+      cursor: pointer; transition: all 0.3s;
     }
     button:hover { background: #059669; transform: translateY(-2px); }
-    .error { color: #f87171; margin-top: 15px; font-size: 14px; display: none; animation: shake 0.5s; }
-    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
     
-    .poster {
-      width: 100%; height: 100vh;
-      background-size: cover !important; 
-      background-position: center !important;
-      background-repeat: no-repeat !important;
-      position: relative;
+    .error {
+      color: #f87171; margin-top: 1rem; font-size: 1.1rem;
+      display: none; animation: shake 0.5s;
     }
-    .overlay-input {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 90%; background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px;
-      text-align: center;
-    }
-    .clue { 
-      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-      padding: 25px; background: rgba(0,0,0,0.85); border-radius: 20px; max-width: 90%;
-      font-size: 18px; line-height: 1.4;
+    @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+    
+    .poster-screen {
+      height: 100vh; width: 100vw; position: fixed;
+      top: 0; left: 0; background-size: cover !important;
+      background-position: center !important; background-repeat: no-repeat !important;
+      display: flex; align-items: center; justify-content: center; padding: 2rem;
     }
   </style>
 </head>
 <body>
-  <div id="content"></div>
+  <div id="app"></div>
 
   <script>
-    // KIOSK MODE: Fullscreen + Anti-cheat
+    // ANTI-CHEAT KIOSK MODE
     function initKiosk() {
-      // Force fullscreen
-      document.documentElement.requestFullscreen?.() || document.documentElement.webkitRequestFullscreen?.();
-      
-      // Block back button
+      document.documentElement.requestFullscreen?.();
       window.history.pushState(null, null, location.href);
       window.onpopstate = () => window.history.pushState(null, null, location.href);
       
-      // Block pull-to-refresh (Android Chrome)
       let lastTouchY = 0;
       document.addEventListener('touchstart', e => {
         if (e.touches[0]) lastTouchY = e.touches[0].clientY;
       }, {passive: true});
       document.addEventListener('touchmove', e => {
-        if (e.touches[0] && lastTouchY && e.touches[0].clientY < lastTouchY - 15) {
-          e.preventDefault();
-        }
+        if (e.touches[0]?.clientY < lastTouchY - 20) e.preventDefault();
         lastTouchY = e.touches[0]?.clientY;
       }, {passive: false});
-      
-      // Block context menu
-      document.addEventListener('contextmenu', e => e.preventDefault());
     }
 
-    // YOUR 17 STAGES - Edit these:
-    const stages = {
-      1:  { jumble: 'BAL', password: 'lab', poster: 'riddle1.jpg',  nextLocation: 'Generator' },
-      2:  { jumble: null, password: 'lab', poster: 'riddle2.jpg', nextLocation: 'sign board' },
-      3:  { jumble: null, password: 'chemistry', poster: 'riddle3.jpg', nextLocation: 'serverroom' },
-      4:  { jumble: null, password: 'serverroom', poster: 'riddle4.jpg', nextClue: '☕ Canteen vending machine', nextLocation: 'canteen' },
-      5:  { jumble: null, password: 'canteen', poster: 'riddle5.jpg', nextClue: '🏀 Basketball court bench', nextLocation: 'gym' },
-      6:  { jumble: null, password: 'gym', poster: 'riddle6.jpg', nextClue: '🎹 Music room piano keys', nextLocation: 'music' },
-      7:  { jumble: null, password: 'music', poster: 'riddle7.jpg', nextClue: '🎨 Art room supply closet', nextLocation: 'artroom' },
-      8:  { jumble: null, password: 'artroom', poster: 'riddle8.jpg', nextClue: '🔬 Physics lab oscilloscope', nextLocation: 'physics' },
-      9:  { jumble: null, password: 'physics', poster: 'riddle9.jpg', nextClue: '📏 Workshop tool cabinet', nextLocation: 'workshop' },
-      10: { jumble: null, password: 'workshop', poster: 'riddle10.jpg', nextClue: '🚻 Near washroom mirrors', nextLocation: 'library' },
-      11: { jumble: null, password: 'library', poster: 'riddle11.jpg', nextClue: '🌳 Behind garden fountain', nextLocation: 'garden' },
-      12: { jumble: null, password: 'garden', poster: 'riddle12.jpg', nextClue: '🚶‍♂️ Staircase handrail', nextLocation: 'staircase' },
-      13: { jumble: null, password: 'staircase', poster: 'riddle13.jpg', nextClue: '🚪 Admin office door frame', nextLocation: 'office' },
-      14: { jumble: null, password: 'office', poster: 'riddle14.jpg', nextClue: '🏛️ Near college statue', nextLocation: 'statue' },
-      15: { jumble: null, password: 'statue', poster: 'riddle15.jpg', nextClue: '🎯 Final challenge ahead!', nextLocation: 'auditorium' },
-      16: { jumble: null, password: 'auditorium', poster: 'riddle16.jpg', nextClue: '🏆 Victory awaits!', nextLocation: 'finish' },
-      17: { jumble: null, password: 'finish', poster: 'winner.jpg', nextClue: '🎉 CHAMPION! Event Complete! 🎉', nextLocation: null }
+    // YOUR EXACT 14 PLACES
+    const game = {
+      stage: 1,
+      places: [
+        { name: 'stationary', jumble: 'STATIONARY', password: 'stationary', poster: 'riddle1.jpg' },
+        { name: 'generator', jumble: null, password: 'stationary', poster: 'riddle2.jpg' },
+        { name: 'signboard', jumble: null, password: 'generator', poster: 'riddle3.jpg' },
+        { name: 'garage', jumble: null, password: 'signboard', poster: 'riddle4.jpg' },
+        { name: 'securitycabin', jumble: null, password: 'garage', poster: 'riddle5.jpg' },
+        { name: 'parking', jumble: null, password: 'securitycabin', poster: 'riddle6.jpg' },
+        { name: 'drinkingwater', jumble: null, password: 'parking', poster: 'riddle7.jpg' },
+        { name: 'noticeboard', jumble: null, password: 'drinkingwater', poster: 'riddle8.jpg' },
+        { name: 'poster', jumble: null, password: 'noticeboard', poster: 'riddle9.jpg' },
+        { name: 'library', jumble: null, password: 'poster', poster: 'riddle10.jpg' },
+        { name: 'fe', jumble: null, password: 'library', poster: 'riddle11.jpg' },
+        { name: 'storageroom', jumble: null, password: 'fe', poster: 'riddle12.jpg' },
+        { name: 'footballstamp', jumble: null, password: 'storageroom', poster: 'riddle13.jpg' },
+        { name: 'cactusplant', jumble: null, password: 'footballstamp', poster: 'riddle14.jpg' },
+        { name: 'warehouse', jumble: null, password: 'cactusplant', poster: 'winner.jpg' }
+      ]
     };
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentStage = parseInt(urlParams.get('stage')) || 1;
-    const stageData = stages[currentStage];
-
-    function shuffleString(str) {
+    function shuffle(str) {
       return str.split('').sort(() => Math.random() - 0.5).join('');
     }
 
-    function showPasswordPage() {
-      const jumbleHtml = stageData.jumble ? 
-        `<div class="jumble" id="jumbleWord" onclick="this.textContent=shuffleString(this.textContent.replace(/[^a-zA-Z]/g,''));">${shuffleString(stageData.jumble)}</div>
-         <h2>🔓 Unjumble & Enter Password</h2>` :
-        `<h2>🔓 Enter Previous Location Name</h2>`;
+    function showPasswordScreen() {
+      const current = game.places[game.stage - 1];
+      const jumbleHtml = current.jumble ? 
+        `<div class="jumble" onclick="this.textContent=shuffle(this.textContent.replace(/[^A-Z]/g,''))">${shuffle(current.jumble)}</div>` : '';
       
-      document.getElementById('content').innerHTML = `
-        <div class="box">
-          <h1>Stage ${currentStage}/17</h1>
+      document.getElementById('app').innerHTML = `
+        <div class="screen">
+          <h1>Stage ${game.stage}/15</h1>
           ${jumbleHtml}
-          <input type="text" id="passwordInput" placeholder="Type password here..." autocomplete="off">
-          <button onclick="checkPassword()">→ Next Riddle</button>
-          <div class="error" id="errorMsg">❌ Wrong! Try again.</div>
+          <div style="font-size:1.2rem;color:rgba(255,255,255,0.9);margin:1.5rem 0;">
+            ${current.jumble ? '🔓 Unjumble the word' : '🔓 Enter previous place'}
+          </div>
+          <input type="text" id="passInput" placeholder="Enter password..." autocomplete="off">
+          <button onclick="checkPassword()">→ Riddle Poster</button>
+          <div class="error" id="errorMsg">❌ Wrong! Try again</div>
         </div>`;
+      document.getElementById('passInput').focus();
     }
 
-    function showRiddlePoster() {
-      document.getElementById('content').innerHTML = `
-        <div class="poster" style="background-image: url('${stageData.poster}');">
-          <div class="overlay-input">
-            <h2 style="margin-bottom: 20px; color: #60a5fa;">📍 Find Next QR</h2>
-            <input type="text" id="passwordInput" placeholder="Previous location name" autocomplete="off">
-            <button onclick="checkPassword()" style="margin-top: 20px;">→ Next QR</button>
+    function showPosterScreen() {
+      const current = game.places[game.stage - 1];
+      document.getElementById('app').innerHTML = `
+        <div class="poster-screen" style="background-image: url('${current.poster}');">
+          <div class="screen" style="background:rgba(0,0,0,0.85);">
+            <h1 style="color:#60a5fa;margin-bottom:2rem;">Solve Riddle Above 👆</h1>
+            <div style="font-size:1.3rem;margin-bottom:1.5rem;color:white;">
+              Find next QR code
+            </div>
+            <input type="text" id="passInput" placeholder="Previous place name" autocomplete="off">
+            <button onclick="checkPassword()">→ Next QR Code</button>
+            <div class="error" id="errorMsg">❌ Wrong place name!</div>
           </div>
-          <div class="clue">${stageData.nextClue}</div>
         </div>`;
+      document.getElementById('passInput').focus();
     }
 
     function checkPassword() {
-      const input = document.getElementById('passwordInput').value.trim().toLowerCase();
-      document.getElementById('errorMsg')?.style.setProperty('display', 'none');
+      const input = document.getElementById('passInput').value.trim().toLowerCase();
+      const current = game.places[game.stage - 1];
+      const errorMsg = document.getElementById('errorMsg');
       
-      if (input === stageData.password.toLowerCase()) {
-        if (currentStage === 17) {
-          document.body.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#10b981;color:white;text-align:center;padding:40px;">
-              <div>
-                <h1 style="font-size:60px;margin-bottom:20px;">🏆 WINNER! 🏆</h1>
-                <p style="font-size:24px;">You completed QR Hunt in ${currentStage} stages!</p>
-                <p style="font-size:20px;">Show this to organizers</p>
-              </div>
-            </div>`;
+      if (input === current.password.toLowerCase()) {
+        errorMsg.style.display = 'none';
+        
+        // Toggle between password screen → poster → next QR
+        if (document.querySelector('.poster-screen')) {
+          // On poster screen, go to next stage
+          game.stage++;
+          if (game.stage > 15) {
+            document.body.innerHTML = `
+              <div style="height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#10b981,#059669);color:white;text-align:center;padding:2rem;">
+                <div class="screen" style="max-width:500px;">
+                  <h1 style="font-size:4rem;margin-bottom:2rem;">🏆 WINNER! 🏆</h1>
+                  <p style="font-size:1.8rem;">QR Hunt Complete!</p>
+                  <p style="font-size:1.4rem;margin-top:1rem;">Show to organizers</p>
+                </div>
+              </div>`;
+            return;
+          }
+          showPasswordScreen();
         } else {
-          window.location.href = `?stage=${currentStage + 1}`;
+          // On password screen, show poster
+          showPosterScreen();
         }
       } else {
-        document.getElementById('errorMsg').style.display = 'block';
-        document.getElementById('passwordInput').value = '';
-        document.getElementById('passwordInput').focus();
+        errorMsg.style.display = 'block';
+        document.getElementById('passInput').value = '';
+        document.getElementById('passInput').focus();
       }
     }
 
-    // START GAME
+    // START
     window.addEventListener('load', () => {
       initKiosk();
-      if (!stageData) {
-        document.getElementById('content').innerHTML = '<div class="box"><h1 style="color:#f87171;">Invalid QR Code</h1></div>';
+      
+      const params = new URLSearchParams(window.location.search);
+      game.stage = parseInt(params.get('stage')) || 1;
+      
+      if (game.stage < 1 || game.stage > 15) {
+        document.getElementById('app').innerHTML = '<div class="screen"><h1 style="color:#f87171;">Invalid QR Code</h1></div>';
         return;
       }
-      showPasswordPage();
-      document.getElementById('passwordInput')?.focus();
+      
+      showPasswordScreen();
     });
   </script>
 </body>
