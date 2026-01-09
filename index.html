@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Hunt Rajkot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { 
+      font-family: 'Inter', Arial, sans-serif;
+      background: radial-gradient(circle at top right, #1e293b, #0f172a);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overscroll-behavior: none;
+    }
+    .box {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      width: 90%; max-width: 350px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    h1 { 
+      font-size: 28px; 
+      background: linear-gradient(to right, #60a5fa, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+    }
+    .jumble { 
+      font-size: 36px; 
+      letter-spacing: 8px; 
+      margin: 25px 0; 
+      padding: 20px; 
+      background: rgba(255,255,255,0.15);
+      border-radius: 15px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s;
+    }
+    .jumble:hover { transform: scale(1.02); }
+    h2 { font-weight: 300; font-size: 16px; color: #94a3b8; margin-bottom: 25px; }
+    input { 
+      width: 100%; padding: 18px; margin-top: 15px; border-radius: 12px; 
+      border: 1px solid rgba(255,255,255,0.1); 
+      background: rgba(15,23,42,0.8); color: white; font-size: 18px;
+      text-align: center;
+    }
+    input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.5); }
+    button { 
+      margin-top: 25px; padding: 18px; width: 100%; border: none; border-radius: 12px; 
+      background: #10b981; color: white; font-weight: bold; font-size: 16px; cursor: pointer; 
+      transition: all 0.3s;
+    }
+    button:hover { background: #059669; transform: translateY(-2px); }
+    .error { color: #f87171; margin-top: 15px; font-size: 14px; display: none; animation: shake 0.5s; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    
+    .poster {
+      width: 100%; height: 100vh;
+      background-size: cover !important; 
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      position: relative;
+    }
+    .overlay-input {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 90%; background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px;
+      text-align: center;
+    }
+    .clue { 
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      padding: 25px; background: rgba(0,0,0,0.85); border-radius: 20px; max-width: 90%;
+      font-size: 18px; line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div id="content"></div>
+
+  <script>
+    // KIOSK MODE: Fullscreen + Anti-cheat
+    function initKiosk() {
+      // Force fullscreen
+      document.documentElement.requestFullscreen?.() || document.documentElement.webkitRequestFullscreen?.();
+      
+      // Block back button
+      window.history.pushState(null, null, location.href);
+      window.onpopstate = () => window.history.pushState(null, null, location.href);
+      
+      // Block pull-to-refresh (Android Chrome)
+      let lastTouchY = 0;
+      document.addEventListener('touchstart', e => {
+        if (e.touches[0]) lastTouchY = e.touches[0].clientY;
+      }, {passive: true});
+      document.addEventListener('touchmove', e => {
+        if (e.touches[0] && lastTouchY && e.touches[0].clientY < lastTouchY - 15) {
+          e.preventDefault();
+        }
+        lastTouchY = e.touches[0]?.clientY;
+      }, {passive: false});
+      
+      // Block context menu
+      document.addEventListener('contextmenu', e => e.preventDefault());
+    }
+
+    // YOUR 17 STAGES - Edit these:
+    const stages = {
+      1:  { jumble: 'BAL', password: 'lab', poster: 'riddle1.jpg',  nextLocation: 'Generator' },
+      2:  { jumble: null, password: 'lab', poster: 'riddle2.jpg', nextLocation: 'sign board' },
+      3:  { jumble: null, password: 'chemistry', poster: 'riddle3.jpg', nextLocation: 'serverroom' },
+      4:  { jumble: null, password: 'serverroom', poster: 'riddle4.jpg', nextClue: '☕ Canteen vending machine', nextLocation: 'canteen' },
+      5:  { jumble: null, password: 'canteen', poster: 'riddle5.jpg', nextClue: '🏀 Basketball court bench', nextLocation: 'gym' },
+      6:  { jumble: null, password: 'gym', poster: 'riddle6.jpg', nextClue: '🎹 Music room piano keys', nextLocation: 'music' },
+      7:  { jumble: null, password: 'music', poster: 'riddle7.jpg', nextClue: '🎨 Art room supply closet', nextLocation: 'artroom' },
+      8:  { jumble: null, password: 'artroom', poster: 'riddle8.jpg', nextClue: '🔬 Physics lab oscilloscope', nextLocation: 'physics' },
+      9:  { jumble: null, password: 'physics', poster: 'riddle9.jpg', nextClue: '📏 Workshop tool cabinet', nextLocation: 'workshop' },
+      10: { jumble: null, password: 'workshop', poster: 'riddle10.jpg', nextClue: '🚻 Near washroom mirrors', nextLocation: 'library' },
+      11: { jumble: null, password: 'library', poster: 'riddle11.jpg', nextClue: '🌳 Behind garden fountain', nextLocation: 'garden' },
+      12: { jumble: null, password: 'garden', poster: 'riddle12.jpg', nextClue: '🚶‍♂️ Staircase handrail', nextLocation: 'staircase' },
+      13: { jumble: null, password: 'staircase', poster: 'riddle13.jpg', nextClue: '🚪 Admin office door frame', nextLocation: 'office' },
+      14: { jumble: null, password: 'office', poster: 'riddle14.jpg', nextClue: '🏛️ Near college statue', nextLocation: 'statue' },
+      15: { jumble: null, password: 'statue', poster: 'riddle15.jpg', nextClue: '🎯 Final challenge ahead!', nextLocation: 'auditorium' },
+      16: { jumble: null, password: 'auditorium', poster: 'riddle16.jpg', nextClue: '🏆 Victory awaits!', nextLocation: 'finish' },
+      17: { jumble: null, password: 'finish', poster: 'winner.jpg', nextClue: '🎉 CHAMPION! Event Complete! 🎉', nextLocation: null }
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentStage = parseInt(urlParams.get('stage')) || 1;
+    const stageData = stages[currentStage];
+
+    function shuffleString(str) {
+      return str.split('').sort(() => Math.random() - 0.5).join('');
+    }
+
+    function showPasswordPage() {
+      const jumbleHtml = stageData.jumble ? 
+        `<div class="jumble" id="jumbleWord" onclick="this.textContent=shuffleString(this.textContent.replace(/[^a-zA-Z]/g,''));">${shuffleString(stageData.jumble)}</div>
+         <h2>🔓 Unjumble & Enter Password</h2>` :
+        `<h2>🔓 Enter Previous Location Name</h2>`;
+      
+      document.getElementById('content').innerHTML = `
+        <div class="box">
+          <h1>Stage ${currentStage}/17</h1>
+          ${jumbleHtml}
+          <input type="text" id="passwordInput" placeholder="Type password here..." autocomplete="off">
+          <button onclick="checkPassword()">→ Next Riddle</button>
+          <div class="error" id="errorMsg">❌ Wrong! Try again.</div>
+        </div>`;
+    }
+
+    function showRiddlePoster() {
+      document.getElementById('content').innerHTML = `
+        <div class="poster" style="background-image: url('${stageData.poster}');">
+          <div class="overlay-input">
+            <h2 style="margin-bottom: 20px; color: #60a5fa;">📍 Find Next QR</h2>
+            <input type="text" id="passwordInput" placeholder="Previous location name" autocomplete="off">
+            <button onclick="checkPassword()" style="margin-top: 20px;">→ Next QR</button>
+          </div>
+          <div class="clue">${stageData.nextClue}</div>
+        </div>`;
+    }
+
+    function checkPassword() {
+      const input = document.getElementById('passwordInput').value.trim().toLowerCase();
+      document.getElementById('errorMsg')?.style.setProperty('display', 'none');
+      
+      if (input === stageData.password.toLowerCase()) {
+        if (currentStage === 17) {
+          document.body.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#10b981;color:white;text-align:center;padding:40px;">
+              <div>
+                <h1 style="font-size:60px;margin-bottom:20px;">🏆 WINNER! 🏆</h1>
+                <p style="font-size:24px;">You completed QR Hunt in ${currentStage} stages!</p>
+                <p style="font-size:20px;">Show this to organizers</p>
+              </div>
+            </div>`;
+        } else {
+          window.location.href = `?stage=${currentStage + 1}`;
+        }
+      } else {
+        document.getElementById('errorMsg').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('passwordInput').focus();
+      }
+    }
+
+    // START GAME
+    window.addEventListener('load', () => {
+      initKiosk();
+      if (!stageData) {
+        document.getElementById('content').innerHTML = '<div class="box"><h1 style="color:#f87171;">Invalid QR Code</h1></div>';
+        return;
+      }
+      showPasswordPage();
+      document.getElementById('passwordInput')?.focus();
+    });
+  </script>
+</body>
+</html>
